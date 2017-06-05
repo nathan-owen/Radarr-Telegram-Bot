@@ -41,20 +41,20 @@ RadarrMessage.prototype.performLibrarySearch = function(searchText) {
 
   var query = searchText;
 
-  self.radarr.get('series').then(function(result) {
-    logger.info(i18n.__('logRadarrAllSeries',self.username));
+  self.radarr.get('movie').then(function(result) {
+    logger.info(i18n.__('logRadarrAllMovies',self.username));
 
     _.sortBy(result, 'title');
 
     var response = [];
     _.forEach(result, function(n, key) {
-      var series = '[' + n.title + '](http://thetvdb.com/?tab=series&id=' + n.tvdbId + ')' + (n.year ? ' - _' + n.year + '_' : '');
+      var movie = '[' + n.title + '](http://themoviedb.org/movie/' + n.tmdbId + ')' + (n.year ? ' - _' + n.year + '_' : '');
       if (query) {
         if (n.title.search( new RegExp(query, 'i') ) !== -1) {
-          response.push(series);
+          response.push(movie);
         }
       } else {
-        response.push(series);
+        response.push(movie);
       }
     });
 
@@ -93,6 +93,7 @@ RadarrMessage.prototype.performLibrarySearch = function(searchText) {
 
 };
 
+
 RadarrMessage.prototype.performRssSync = function() {
   var self = this;
 
@@ -108,6 +109,7 @@ RadarrMessage.prototype.performRssSync = function() {
   });
 };
 
+/* Wanted Search Not Implemented Yet. There is an issue with the Radarr API
 RadarrMessage.prototype.performWantedSearch = function() {
   var self = this;
 
@@ -143,6 +145,7 @@ RadarrMessage.prototype.performWantedSearch = function() {
     return self._sendMessage(error);
   });
 };
+*/
 
 RadarrMessage.prototype.performLibraryRefresh = function() {
   var self = this;
@@ -150,7 +153,7 @@ RadarrMessage.prototype.performLibraryRefresh = function() {
   logger.info(i18n.__('logRadarrRefreshCommandSent', self.username));
 
   self.radarr.post('command', {
-    'name': 'RefreshSeries'
+    'name': 'RefreshMovie'
   })
   .then(function() {
     logger.info(i18n.__('logRadarrRefreshCommandExecuted', self.username));
@@ -170,24 +173,24 @@ RadarrMessage.prototype.performCalendarSearch = function(futureDays) {
   logger.info(i18n.__('logRadarrUpcomingCommandSent', self.username, fromDate, toDate));
 
   self.radarr.get('calendar', { 'start': fromDate, 'end': toDate})
-  .then(function (episode) {
-    if (!episode.length) {
+  .then(function (movie) {
+    if (!movie.length) {
       throw new Error(i18n.__('errorRadarrNothingInCalendar'));
     }
 
     var lastDate = null;
     var response = [];
-    _.forEach(episode, function(n, key) {
+    _.forEach(movie, function(n, key) {
       var done = (n.hasFile ? i18n.__('RadarrDone') : '');
 
       // Add an empty line to break list of multiple days
       if(lastDate != null && n.airDate != lastDate) response.push(' ');
 
-      response.push(n.airDate + ' - ' + n.series.title + done);
+      response.push(n.physicalRelease + ' - ' + n.title + done);
       lastDate = n.airDate;
     });
 
-    logger.info(i18n.__("logRadarrFoundSeries", self.username, response.join(',')));
+    logger.info(i18n.__("logRadarrFoundMovie", self.username, response.join(',')));
 
     return self._sendMessage(response.join('\n'), []);
   })
@@ -728,7 +731,7 @@ RadarrMessage.prototype._sendMessage = function(message, keyboard) {
     };
   } else {
     options = {
-      // 'disable_web_page_preview': true,
+      'disable_web_page_preview': true,
       'parse_mode': 'Markdown',
       'selective': 2,
       'reply_markup': JSON.stringify( { keyboard: keyboard, one_time_keyboard: true })

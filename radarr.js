@@ -95,12 +95,12 @@ bot.on('message', function(msg) {
     }  
   }
 
-  if(/^\/wanted$/g.test(message)) {
-    verifyAdmin(user.id);
-    if(isAdmin(user.id)){
-      return radarr.performWantedSearch();
-    }
-  }
+  // if(/^\/wanted$/g.test(message)) {
+  //   verifyAdmin(user.id);
+  //   if(isAdmin(user.id)){
+  //     return radarr.performWantedSearch();
+  //   }
+  // }
 
   if(/^\/refresh$/g.test(message)) {
     verifyAdmin(user.id);
@@ -681,7 +681,7 @@ function sendCommands(fromId) {
 
   if (isAdmin(fromId)) {
     response.push(i18n.__('botChatHelp_9'));
-    response.push(i18n.__('botChatHelp_10'));
+    //response.push(i18n.__('botChatHelp_10'));
     response.push(i18n.__('botChatHelp_11'));
     response.push(i18n.__('botChatHelp_12'));
     response.push(i18n.__('botChatHelp_13'));
