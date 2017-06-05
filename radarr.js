@@ -135,8 +135,8 @@ bot.on('message', function(msg) {
    */
   if (/^\/[Qq](uery)? (.+)$/g.test(message)) {
     if(isAuthorized(user.id)){
-       var seriesName = /^\/[Qq](uery)? (.+)/g.exec(message)[2] || null;
-       return radarr.sendSeriesList(seriesName);
+       var movieName = /^\/[Qq](uery)? (.+)/g.exec(message)[2] || null;
+       return radarr.sendMovieList(movieName);
     } else {
        return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
     }
@@ -167,43 +167,45 @@ bot.on('message', function(msg) {
 
   if (currentState === state.radarr.CONFIRM) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeriesConfirm', user.id, message));
-    return radarr.confirmShowSelect(message);
+    logger.info(i18n.__('botChatQueryMovieConfirm', user.id, message));
+    return radarr.confirmMovieSelect(message);
   }
 
   if (currentState === state.radarr.PROFILE) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeriesChoose', user.id, message));
+    logger.info(i18n.__('botChatQueryMovieChoose', user.id, message));
     return radarr.sendProfileList(message);
   }
 
-  if (currentState === state.radarr.MONITOR) {
-    verifyUser(user.id);
-    logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
-    return radarr.sendMonitorList(message);
-  }
+  // if (currentState === state.radarr.MONITOR) {
+  //   verifyUser(user.id);
+  //   logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
+  //   return radarr.sendMonitorList(message);
+  // }
 
-  if (currentState === state.radarr.TYPE) {
-    verifyUser(user.id);
-    logger.info(i18n.__('botChatQueryTypeChoose', user.id, message));
-    return radarr.sendTypeList(message);
-  }
+  // if (currentState === state.radarr.TYPE) {
+  //   verifyUser(user.id);
+  //   logger.info(i18n.__('botChatQueryTypeChoose', user.id, message));
+  //   return radarr.sendTypeList(message);
+  // }
 
   if (currentState === state.radarr.FOLDER) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQueryFolderChoose', user.id, message));
+    logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
     return radarr.sendFolderList(message);
   }
 
-  if (currentState === state.radarr.SEASON_FOLDER) {
-    verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeasonFolderChoose', user.id, message));
-    return radarr.sendSeasonFolderList(message);
-  }
+  // if (currentState === state.radarr.SEASON_FOLDER) {
+  //   verifyUser(user.id);
+  //   logger.info(i18n.__('botChatQuerySeasonFolderChoose', user.id, message));
+  //   return radarr.sendSeasonFolderList(message);
+  // }
 
-  if (currentState === state.radarr.ADD_SERIES) {
+  if (currentState === state.radarr.ADD_MOVIE) {
     verifyUser(user.id);
-    return radarr.sendAddSeries(message);
+
+    logger.info(i18n.__('botChatQueryFolderChoose',user.id,message));
+    return radarr.sendAddMovie(message);
   }
 
 });

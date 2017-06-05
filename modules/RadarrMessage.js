@@ -201,31 +201,31 @@ RadarrMessage.prototype.performCalendarSearch = function(futureDays) {
 
 
 /*
- * handle the flow of adding a new series
+ * handle the flow of adding a new movie
  */
-RadarrMessage.prototype.sendSeriesList = function(seriesName) {
+RadarrMessage.prototype.sendMovieList = function(movieName) {
   var self = this;
 
   self.test = 'hello';
 
   logger.info(i18n.__('logRadarrQueryCommandSent', self.username));
 
-  self.radarr.get('series/lookup', { 'term': seriesName }).then(function(result) {
+  self.radarr.get('movies/lookup', { 'term': movieName }).then(function(result) {
     if (!result.length) {
-      throw new Error(i18n.__('errorRadarrSerieNotFound', seriesName));
+      throw new Error(i18n.__('errorRadarrMovieNotFound', movieName));
     }
 
-    var series = result;
+    var movie = result;
 
-    logger.info(i18n.__('logRadarrUserSerieRequested', self.username, seriesName));
+    logger.info(i18n.__('logRadarrUserMovieRequested', self.username, movieName));
 
-    var seriesList = [], keyboardList = [];
+    var movieList = [], keyboardList = [];
 
-    series.length = (series.length > config.bot.maxResults ? config.bot.maxResults : series.length);
+    movie.length = (movie.length > config.bot.maxResults ? config.bot.maxResults : movie.length);
 
-    var response = [i18n.__('botChatRadarrFoundNSeries', series.length)];
+    var response = [i18n.__('botChatRadarrFoundNMovie', movie.length)];
 
-    _.forEach(series, function(n, key) {
+    _.forEach(movie, function(n, key) {
 
       var imageCover = null;
       _.forEach(n.images, function(image, index){
@@ -237,29 +237,28 @@ RadarrMessage.prototype.sendSeriesList = function(seriesName) {
       var id = key + 1;
       var keyboardValue = n.title + (n.year ? ' - ' + n.year : '');
 
-      seriesList.push({
+      movieList.push({
         'id': id,
         'title': n.title,
         'plot': n.overview,
         'year': n.year,
-        'tvdbId': n.tvdbId,
+        'tmdbID': n.tmdbId,
         'titleSlug': n.titleSlug,
-        'seasons': n.seasons,
         'keyboardValue': keyboardValue,
         'coverUrl': imageCover
       });
 
       keyboardList.push([keyboardValue]);
-
-      response.push('➸ ['+keyboardValue+'](http://thetvdb.com/?tab=series&id='+n.tvdbId+')');
+  
+      response.push('➸ ['+keyboardValue+'](http://themoviedb.org/movie/' + n.tmdbId + ')');
     });
 
     response.push(i18n.__('selectFromMenu'));
 
-    logger.info(i18n.__("logRadarrFoundSeries2", self.username, keyboardList.join(',')));
+    logger.info(i18n.__("logRadarrFoundMovie2", self.username, keyboardList.join(',')));
 
     // set cache
-    self.cache.set('seriesList' + self.user.id, seriesList);
+    self.cache.set('movieList' + self.user.id, movieList);
     self.cache.set('state' + self.user.id, state.radarr.CONFIRM);
 
     return self._sendMessage(response.join('\n'), keyboardList);
@@ -269,62 +268,62 @@ RadarrMessage.prototype.sendSeriesList = function(seriesName) {
   });
 };
 
-RadarrMessage.prototype.confirmShowSelect = function(displayName) {
+RadarrMessage.prototype.confirmMovieSelect = function(displayName) {
   var self = this;
 
-  var seriesList = self.cache.get('seriesList' + self.user.id);
+  var movieList = self.cache.get('movieList' + self.user.id);
 
-  if (!seriesList) {
+  if (!movieList) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  var series = _.filter(seriesList, function(item) { return item.keyboardValue === displayName; })[0];
-  if (!series) {
-    return self._sendMessage(new Error(i18n.__('botChatRadarrSerieNotFound', displayName)));
+  var movie = _.filter(movieList, function(item) { return item.keyboardValue === displayName; })[0];
+  if (!movie) {
+    return self._sendMessage(new Error(i18n.__('botChatRadarrMovieNotFound', displayName)));
   }
 
   // use workflow to run async tasks
   var workflow = new (require('events').EventEmitter)();
 
-  // check for existing series on radarr
-  workflow.on('checkRadarrSeries', function () {
-    self.radarr.get('series').then(function(result) {
-      logger.info(i18n.__('logRadarrLookingForExistingSeries', self.username));
+  // check for existing movie on radarr
+  workflow.on('checkRadarrMovie', function () {
+    self.radarr.get('movie').then(function(result) {
+      logger.info(i18n.__('logRadarrLookingForExistingMovie', self.username));
 
-      var existingSeries = _.filter(result, function(item) { return item.tvdbId === series.tvdbId; })[0];
-      if (existingSeries) {
-        throw new Error(i18n.__('errorRadarrSerieAlreadyTracked'));
+      var existingMovie = _.filter(result, function(item) { return item.tmdbId === movie.tmdbID; })[0];
+      if (existingMovie) {
+        throw new Error(i18n.__('errorRadarrMovieAlreadyTracked'));
       }
-      workflow.emit('confirmShow');
+      workflow.emit('confirmMovie');
     }).catch(function(error) {
       return self._sendMessage(error);
     });
   });
 
-  // check for existing series on radarr
-  workflow.on('confirmShow', function () {
-    self.radarr.get('series').then(function(result) {
-      logger.info(i18n.__('logRadarrConfirmCorrectShow', series.keyboardValue, self.username));
+  // check for existing movie on radarr
+  workflow.on('confirmMovie', function () {
+    self.radarr.get('movie').then(function(result) {
+      logger.info(i18n.__('logRadarrConfirmCorrectMovie', movie.keyboardValue, self.username));
 
       var keyboardList = [[i18n.__('globalYes')], [i18n.__('globalNo')]];
 
-      var response = ['*' + series.title + ' (' + series.year + ')*\n'];
+      var response = ['*' + movie.title + ' (' + movie.year + ')*\n'];
 
-      response.push(series.plot + '\n');
-      response.push(i18n.__('botChatRadarrIsShowCorrect'));
+      response.push(movie.plot + '\n');
+      response.push(i18n.__('botChatRadarrIsMovieCorrect'));
       response.push(i18n.__('globalArrowYes'));
       response.push(i18n.__('globalArrowNo'));
 
       // Add cover to message (if available)
-      if(series.coverUrl !== null){
-        response.push('\n[Poster!](' + series.coverUrl + ')');
+      if(movie.coverUrl !== null){
+        response.push('\n[Poster!](' + movie.coverUrl + ')');
       }
 
       // set cache
       self.cache.set('state' + self.user.id, state.radarr.PROFILE);
-      self.cache.set('seriesId' + self.user.id, series.id);
+      self.cache.set('movieId' + self.user.id, movie.id);
 
-      return self._sendMessage(response.join('\n'), keyboardList);
+      return self._sendMessage(response.join('\n'), keyboardList,false);
 
     }).catch(function(error) {
       return self._sendMessage(error);
@@ -334,15 +333,15 @@ RadarrMessage.prototype.confirmShowSelect = function(displayName) {
   /**
    * Initiate the workflow
    */
-  workflow.emit('checkRadarrSeries');
+  workflow.emit('checkRadarrMovie');
 };
 
 RadarrMessage.prototype.sendProfileList = function(displayName) {
   var self = this;
 
-  var seriesId = self.cache.get('seriesId' + self.user.id);
+  var movieId = self.cache.get('movieId' + self.user.id);
 
-  if (!seriesId) {
+  if (!movieId) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
@@ -389,8 +388,8 @@ RadarrMessage.prototype.sendProfileList = function(displayName) {
       logger.info(i18n.__('logRadarrFoundProfile', self.username, keyboardList.join(',')));
 
       // set cache
-      self.cache.set('state' + self.user.id, state.radarr.MONITOR);
-      self.cache.set('seriesProfileList' + self.user.id, profileList);
+      self.cache.set('state' + self.user.id, state.radarr.FOLDER);
+      self.cache.set('movieProfileList' + self.user.id, profileList);
 
       return self._sendMessage(response.join('\n'), keyboardList);
     })
@@ -408,7 +407,7 @@ RadarrMessage.prototype.sendProfileList = function(displayName) {
 RadarrMessage.prototype.sendMonitorList = function(profileName) {
   var self = this;
 
-  var profileList = self.cache.get('seriesProfileList' + self.user.id);
+  var profileList = self.cache.get('movieProfileList' + self.user.id);
   if (!profileList) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
@@ -420,7 +419,7 @@ RadarrMessage.prototype.sendMonitorList = function(profileName) {
 
   logger.info(i18n.__('logRadarrMonitorListRequest', self.username));
 
-  var monitor = ['future', 'all', 'none', 'latest', 'first'];
+  var monitor = ['yes','no'];
   var monitorList = [], keyboardList = [], keyboardRow = [];
   var response = [i18n.__('botChatRadarrSelectSeason')];
   _.forEach(monitor, function(n, key) {
@@ -443,68 +442,22 @@ RadarrMessage.prototype.sendMonitorList = function(profileName) {
 
   logger.info(i18n.__('logRadarrFoundMonitorType', self.username, keyboardList.join(',')));
 
-  self.cache.set('seriesProfileId' + self.user.id, profile.profileId);
-  self.cache.set('seriesMonitorList' + self.user.id, monitorList);
+  self.cache.set('movieProfileId' + self.user.id, profile.profileId);
+  self.cache.set('movieMonitorList' + self.user.id, monitorList);
   self.cache.set('state' + self.user.id, state.radarr.TYPE);
 
   return self._sendMessage(response.join('\n'), keyboardList);
 };
 
-RadarrMessage.prototype.sendTypeList = function(monitorName) {
+RadarrMessage.prototype.sendFolderList = function(profileName) {
   var self = this;
-
-  var monitorList = self.cache.get('seriesMonitorList' + self.user.id);
-  if (!monitorList) {
+  var profileList = self.cache.get('movieProfileList' + self.user.id);
+  if (!profileList) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  var monitor = _.filter(monitorList, function(item) { return item.type === monitorName; })[0];
-  if (!monitor) {
-    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
-  }
-
-  logger.info(i18n.__('logRadarrUserSeriesTypeRequested', self.username));
-
-  var type = ['standard', 'airs daily', 'anime'];
-  var typeList = [], keyboardList = [], keyboardRow = [];
-  var response = [i18n.__('selectSeriesType')];
-  _.forEach(type, function(n, key) {
-    typeList.push({ 'type': n });
-
-    response.push('➸ ' + n);
-
-    keyboardRow.push(n);
-    if (keyboardRow.length === 2) {
-      keyboardList.push(keyboardRow);
-      keyboardRow = [];
-    }
-  });
-
-  if (keyboardRow.length === 1) {
-    keyboardList.push([keyboardRow[0]]);
-  }
-
-  response.push(i18n.__('selectFromMenu'));
-
-  logger.info(i18n.__('logRadarrFoundSeriesType', self.username, keyboardList.join(',')));
-
-  self.cache.set('seriesMonitorId' + self.user.id, monitor.type);
-  self.cache.set('seriesTypeList' + self.user.id, typeList);
-  self.cache.set('state' + self.user.id, state.radarr.FOLDER);
-
-  return self._sendMessage(response.join('\n'), keyboardList);
-};
-
-RadarrMessage.prototype.sendFolderList = function(typeName) {
-  var self = this;
-
-  var typeList = self.cache.get('seriesTypeList' + self.user.id);
-  if (!typeList) {
-    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
-  }
-
-  var type = _.filter(typeList, function(item) { return item.type === typeName; })[0];
-  if (!type) {
+  var profile = _.filter(profileList, function(item) { return item.name === profileName; })[0];
+  if (!profile) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
@@ -531,9 +484,10 @@ RadarrMessage.prototype.sendFolderList = function(typeName) {
     logger.info(i18n.__('logRadarrFoundFolders', self.username, keyboardList.join(',')));
 
     // set cache
-    self.cache.set('seriesTypeId' + self.user.id, type.type);
-    self.cache.set('seriesFolderList' + self.user.id, folderList);
-    self.cache.set('state' + self.user.id, state.radarr.SEASON_FOLDER);
+    self.cache.set('movieProfileId' + self.user.id, profile.profileId);
+    
+    self.cache.set('movieFolderList' + self.user.id, folderList);
+    self.cache.set('state' + self.user.id, state.radarr.ADD_MOVIE);
 
     return self._sendMessage(response.join('\n'), keyboardList);
   })
@@ -545,7 +499,7 @@ RadarrMessage.prototype.sendFolderList = function(typeName) {
 RadarrMessage.prototype.sendSeasonFolderList = function(folderName) {
   var self = this;
 
-  var folderList = self.cache.get('seriesFolderList' + self.user.id);
+  var folderList = self.cache.get('movieFolderList' + self.user.id);
   if (!folderList) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
@@ -580,112 +534,76 @@ RadarrMessage.prototype.sendSeasonFolderList = function(folderName) {
 
     logger.info(i18n.__('logRadarrFoundSeasonsFolderTypes', self.username, keyboardList.join(',')));
 
-  self.cache.set('seriesFolderId' + self.user.id, folder.folderId);
-  self.cache.set('seriesSeasonFolderList' + self.user.id, seasonFolderList);
+  self.cache.set('movieFolderId' + self.user.id, folder.folderId);
+  self.cache.set('movieSeasonFolderList' + self.user.id, seasonFolderList);
   self.cache.set('state' + self.user.id, state.radarr.ADD_SERIES);
 
   return self._sendMessage(response.join('\n'), keyboardList);
 };
 
-RadarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
+RadarrMessage.prototype.sendAddMovie = function(folderName) {
   var self = this;
 
-  var seriesId         = self.cache.get('seriesId' + self.user.id);
-  var seriesList       = self.cache.get('seriesList' + self.user.id);
-  var profileId        = self.cache.get('seriesProfileId' + self.user.id);
-  var profileList      = self.cache.get('seriesProfileList' + self.user.id);
-  var monitorId        = self.cache.get('seriesMonitorId' + self.user.id);
-  var monitorList      = self.cache.get('seriesMonitorList' + self.user.id);
-  var typeId           = self.cache.get('seriesTypeId' + self.user.id);
-  var typeList         = self.cache.get('seriesTypeList' + self.user.id);
-  var folderId         = self.cache.get('seriesFolderId' + self.user.id);
-  var folderList       = self.cache.get('seriesFolderList' + self.user.id);
-  var seasonFolderId   = seasonFolderName;
-  var seasonFolderList = self.cache.get('seriesSeasonFolderList' + self.user.id);
-
-  if (!seasonFolderList) {
-    self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
+  var folderList = self.cache.get('movieFolderList' + self.user.id);
+  if (!folderList) {
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  var series       = _.filter(seriesList, function(item) { return item.id === seriesId; })[0];
+  var folder = _.filter(folderList, function(item) { return item.path === folderName; })[0];
+  if (!folder) {
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
+  }
+    self.cache.set('movieFolderId' + self.user.id, folder.folderId);
+
+
+  var movieId         = self.cache.get('movieId' + self.user.id);
+  var movieList       = self.cache.get('movieList' + self.user.id);
+  var profileId        = self.cache.get('movieProfileId' + self.user.id);
+  var profileList      = self.cache.get('movieProfileList' + self.user.id);
+  //var monitorId        = self.cache.get('movieMonitorId' + self.user.id);
+  //var monitorList      = self.cache.get('movieMonitorList' + self.user.id);
+  //var typeId           = self.cache.get('movieTypeId' + self.user.id);
+  //var typeList         = self.cache.get('movieTypeList' + self.user.id);
+  var folderId         = self.cache.get('movieFolderId' + self.user.id);
+  var folderList       = self.cache.get('movieFolderList' + self.user.id);
+  //var seasonFolderId   = seasonFolderName;
+  //var seasonFolderList = self.cache.get('movieSeasonFolderList' + self.user.id);
+
+
+
+  var movie       = _.filter(movieList, function(item) { return item.id === movieId; })[0];
   var profile      = _.filter(profileList, function(item) { return item.profileId === profileId; })[0];
-  var monitor      = _.filter(monitorList, function(item) { return item.type === monitorId; })[0];
-  var type         = _.filter(typeList, function(item) { return item.type === typeId; })[0];
+ // var monitor      = _.filter(monitorList, function(item) { return item.type === monitorId; })[0];
+  //var type         = _.filter(typeList, function(item) { return item.type === typeId; })[0];
   var folder       = _.filter(folderList, function(item) { return item.folderId === folderId; })[0];
-  var seasonFolder = _.filter(seasonFolderList, function(item) { return item.type === seasonFolderId; })[0];
+  //var seasonFolder = _.filter(seasonFolderList, function(item) { return item.type === seasonFolderId; })[0];
 
   var postOpts              = {};
-  postOpts.tvdbId           = series.tvdbId;
-  postOpts.title            = series.title;
-  postOpts.titleSlug        = series.titleSlug;
+  postOpts.tmdbId           = movie.tmdbID;
+  postOpts.title            = movie.title;
+  postOpts.titleSlug        = movie.titleSlug;
   postOpts.rootFolderPath   = folder.path;
-  postOpts.seasonFolder     = (seasonFolder.type === i18n.__("globalYes") ? true : false);
+//  postOpts.seasonFolder     = (seasonFolder.type === i18n.__("globalYes") ? true : false);
   postOpts.monitored        = true;
-  postOpts.seriesType       = (type.type === 'airs daily' ? 'daily' : type.type);
+  //postOpts.movieType       = (type.type === 'airs daily' ? 'daily' : type.type);
   postOpts.qualityProfileId = profile.profileId;
   postOpts.images           = [];
+  var addOptions            = {};
+  addOptions.searchForMovie = true;
+  postOpts.addOptions       = addOptions;
 
-  var lastSeason  = _.max(series.seasons, 'seasonNumber');
-  var firstSeason = _.min(_.reject(series.seasons, { seasonNumber: 0 }), 'seasonNumber');
 
-  switch (monitor.type) {
-    case 'future':
-      postOpts.ignoreEpisodesWithFiles = true;
-      postOpts.ignoreEpisodesWithoutFiles = true;
-      break;
-    case 'all':
-      postOpts.ignoreEpisodesWithFiles = false;
-      postOpts.ignoreEpisodesWithoutFiles = false;
+  logger.info(i18n.__("logRadarrMovieAddedWithOptions", self.username, movie.title, JSON.stringify(postOpts)));
 
-      _.each(series.seasons, function(season) {
-        if (season.seasonNumber !== 0) {
-          season.monitored = true;
-        } else {
-          season.monitored = false;
-        }
-      });
-      break;
-    case 'none':
-      _.each(series.seasons, function(season) {
-        season.monitored = false;
-      });
-      break;
-    case 'latest':
-      _.each(series.seasons, function(season) {
-        if (season.seasonNumber === lastSeason.seasonNumber) {
-          season.monitored = true;
-        } else {
-          season.monitored = false;
-        }
-      });
-      break;
-    case 'first':
-      _.each(series.seasons, function(season) {
-        if (season.seasonNumber === firstSeason.seasonNumber) {
-          season.monitored = true;
-        } else {
-          season.monitored = false;
-        }
-      });
-      break;
-    default:
-      self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
-  }
-
-  // update seasons to be monitored
-  postOpts.seasons = series.seasons;
-
-  logger.info(i18n.__("logRadarrSerieAddedWithOptions", self.username, series.title, JSON.stringify(postOpts)));
-
-  self.radarr.post('series', postOpts).then(function(result) {
+  self.radarr.post('movie', postOpts).then(function(result) {
     if (!result) {
-      throw new Error(i18n.__("logRadarrSerieCantAdd"));
+      throw new Error(i18n.__("logRadarrMovieCantAdd"));
     }
 
-    logger.info(i18n.__("logRadarrSerieAdded", self.username, series.title));
+    logger.info(i18n.__("logRadarrMovieAdded", self.username, movie.title));
 
     if (self._isBotAdmin() && self.adminId !== self.user.id) {
-      self.bot.sendMessage(self.user.id, i18n.__("botChatRadarrSerieAddedBy", series.title, self.username), {
+      self.bot.sendMessage(self.user.id, i18n.__("botChatRadarrMovieAddedBy", movie.title, self.username), {
         'selective': 2,
         'parse_mode': 'Markdown',
         'reply_markup': {
@@ -694,7 +612,7 @@ RadarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
       });
     }
 
-    return self.bot.sendMessage(self.user.id, i18n.__("botChatRadarrSerieAdded", series.title), {
+    return self.bot.sendMessage(self.user.id, i18n.__("botChatRadarrMovieAdded", movie.title), {
       'selective': 2,
       'parse_mode': 'Markdown',
       'reply_markup': {
@@ -714,10 +632,9 @@ RadarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
 /*
  * private methods
  */
-RadarrMessage.prototype._sendMessage = function(message, keyboard) {
+RadarrMessage.prototype._sendMessage = function(message, keyboard,webPreview = true) {
   var self = this;
   keyboard = keyboard || null;
-
   var options;
   if (message instanceof Error) {
     logger.warn(i18n.__("logMessageClear", self.username, message.message));
@@ -731,7 +648,7 @@ RadarrMessage.prototype._sendMessage = function(message, keyboard) {
     };
   } else {
     options = {
-      'disable_web_page_preview': true,
+      'disable_web_page_preview': webPreview,
       'parse_mode': 'Markdown',
       'selective': 2,
       'reply_markup': JSON.stringify( { keyboard: keyboard, one_time_keyboard: true })
@@ -754,11 +671,11 @@ RadarrMessage.prototype._clearCache = function() {
   logger.info(i18n.__("logClearCache", self.username));
 
   var cacheItems = [
-    'seriesId', 'seriesList', 'seriesProfileId',
-    'seriesProfileList', 'seriesFolderId', 'seriesFolderList',
-    'seriesMonitorId', 'seriesMonitorList', 'seriesFolderId',
-    'seriesFolderList', 'seriesTypeId', 'seriesTypeList',
-    'seriesSeasonFolderList', 'state'
+    'movieId', 'movieList', 'movieProfileId',
+    'movieProfileList', 'movieFolderId', 'movieFolderList',
+    'movieMonitorId', 'movieMonitorList', 'movieFolderId',
+    'movieFolderList', 'movieTypeId', 'movieTypeList',
+    'movieSeasonFolderList', 'state'
   ];
 
   return _(cacheItems).forEach(function(item) {
