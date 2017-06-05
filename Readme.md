@@ -17,12 +17,12 @@ Getting Started
 
 ```bash
 # Clone the repository
-git clone https://github.com/onedr0p/telegram-sonarr-bot
+git clone https://github.com/nathan-owen/radarr-telegram-bot
 ```
 
 ```bash
 # Install dependencies
-cd telegram-sonarr-bot
+cd radarr-telegram-bot
 npm install
 ```
 
@@ -59,7 +59,7 @@ Sonarr:
 
 ```bash
 # Start the bot
-node sonarr.js
+node radarr.js
 ```
 
 ## Usage (commands)
