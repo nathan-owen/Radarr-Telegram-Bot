@@ -62,7 +62,7 @@ Sonarr:
 node radarr.js
 ```
 
-## Usage (commands)
+## Usage (commands) Currently In Development. Below is hold over from Sonarr
 
 ### First use
 Send the bot the `/auth` command with the password you created in `config.json`
