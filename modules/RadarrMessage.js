@@ -2,7 +2,7 @@
 
 'use strict';
 
-var SonarrAPI = require('sonarr-api');
+var RadarrAPI = require('sonarr-api');
 var _         = require('lodash');
 var moment    = require('moment');
 
@@ -15,34 +15,34 @@ var acl    = require(__dirname + '/../lib/acl');
 /*
  * initalize the class
  */
-function SonarrMessage(bot, user, cache) {
+function RadarrMessage(bot, user, cache) {
   this.bot      = bot;
   this.user     = user;
   this.cache    = cache;
   this.adminId  = config.bot.owner;
   this.username = this.user.username || (this.user.first_name + (' ' + this.user.last_name || ''));
 
-  this.sonarr = new SonarrAPI({
-    hostname : config.sonarr.hostname,
-    apiKey   : config.sonarr.apiKey,
-    port     : config.sonarr.port,
-    urlBase  : config.sonarr.urlBase,
-    ssl      : config.sonarr.ssl,
-    username : config.sonarr.username,
-    password : config.sonarr.password
+  this.radarr = new RadarrAPI({
+    hostname : config.radarr.hostname,
+    apiKey   : config.radarr.apiKey,
+    port     : config.radarr.port,
+    urlBase  : config.radarr.urlBase,
+    ssl      : config.radarr.ssl,
+    username : config.radarr.username,
+    password : config.radarr.password
   });
 }
 
 /*
  * perform commands
  */
-SonarrMessage.prototype.performLibrarySearch = function(searchText) {
+RadarrMessage.prototype.performLibrarySearch = function(searchText) {
   var self = this;
 
   var query = searchText;
 
-  self.sonarr.get('series').then(function(result) {
-    logger.info(i18n.__('logSonarrAllSeries',self.username));
+  self.radarr.get('series').then(function(result) {
+    logger.info(i18n.__('logRadarrAllSeries',self.username));
 
     _.sortBy(result, 'title');
 
@@ -59,7 +59,7 @@ SonarrMessage.prototype.performLibrarySearch = function(searchText) {
     });
 
     if (!response.length) {
-      throw new Error(i18n.__('errorSonarrUnableToLocate', query));
+      throw new Error(i18n.__('errorRadarrUnableToLocate', query));
     }
 
     response.sort();
@@ -93,14 +93,14 @@ SonarrMessage.prototype.performLibrarySearch = function(searchText) {
 
 };
 
-SonarrMessage.prototype.performRssSync = function() {
+RadarrMessage.prototype.performRssSync = function() {
   var self = this;
 
-  logger.info(i18n.__('logSonarrRSSCommandSent'));
+  logger.info(i18n.__('logRadarrRSSCommandSent'));
 
-  self.sonarr.post('command', { 'name': 'RssSync' })
+  self.radarr.post('command', { 'name': 'RssSync' })
   .then(function() {
-    logger.info('logSonarrRSSCommandExecuted', self.username);
+    logger.info('logRadarrRSSCommandExecuted', self.username);
     return self._sendMessage(i18n.__('botChatSonnarRSSCommandExecuted'));
   })
   .catch(function(error) {
@@ -108,12 +108,12 @@ SonarrMessage.prototype.performRssSync = function() {
   });
 };
 
-SonarrMessage.prototype.performWantedSearch = function() {
+RadarrMessage.prototype.performWantedSearch = function() {
   var self = this;
 
-  logger.info(i18n.__('logSonarrWantedCommandSent', self.username));
+  logger.info(i18n.__('logRadarrWantedCommandSent', self.username));
 
-  self.sonarr.get('/wanted/missing', {
+  self.radarr.get('/wanted/missing', {
     'page': 1,
     'pageSize': 50,
     'sortKey': 'airDateUtc',
@@ -127,13 +127,13 @@ SonarrMessage.prototype.performWantedSearch = function() {
     return episodeIds;
   })
   .then(function(episodes) {
-    self.sonarr.post('command', {
+    self.radarr.post('command', {
       'name': 'EpisodeSearch',
       'episodeIds': episodes
     })
     .then(function() {
-      logger.info(i18n.__('logSonarrWantedCommandExecuted', self.username));
-      return self._sendMessage(i18n.__('botChatSonarrWantedCommandExecuted'));
+      logger.info(i18n.__('logRadarrWantedCommandExecuted', self.username));
+      return self._sendMessage(i18n.__('botChatRadarrWantedCommandExecuted'));
     })
     .catch(function(error) {
       return self._sendMessage(error);
@@ -144,41 +144,41 @@ SonarrMessage.prototype.performWantedSearch = function() {
   });
 };
 
-SonarrMessage.prototype.performLibraryRefresh = function() {
+RadarrMessage.prototype.performLibraryRefresh = function() {
   var self = this;
 
-  logger.info(i18n.__('logSonarrRefreshCommandSent', self.username));
+  logger.info(i18n.__('logRadarrRefreshCommandSent', self.username));
 
-  self.sonarr.post('command', {
+  self.radarr.post('command', {
     'name': 'RefreshSeries'
   })
   .then(function() {
-    logger.info(i18n.__('logSonarrRefreshCommandExecuted', self.username));
-    return self._sendMessage(i18n.__('botChatSonarrRefreshCommandExecuted'));
+    logger.info(i18n.__('logRadarrRefreshCommandExecuted', self.username));
+    return self._sendMessage(i18n.__('botChatRadarrRefreshCommandExecuted'));
   })
   .catch(function(error) {
     return self._sendMessage(error);
   });
 };
 
-SonarrMessage.prototype.performCalendarSearch = function(futureDays) {
+RadarrMessage.prototype.performCalendarSearch = function(futureDays) {
   var self = this;
 
   var fromDate = moment().toISOString();
   var toDate = moment().add(futureDays, 'day').toISOString();
 
-  logger.info(i18n.__('logSonarrUpcomingCommandSent', self.username, fromDate, toDate));
+  logger.info(i18n.__('logRadarrUpcomingCommandSent', self.username, fromDate, toDate));
 
-  self.sonarr.get('calendar', { 'start': fromDate, 'end': toDate})
+  self.radarr.get('calendar', { 'start': fromDate, 'end': toDate})
   .then(function (episode) {
     if (!episode.length) {
-      throw new Error(i18n.__('errorSonarrNothingInCalendar'));
+      throw new Error(i18n.__('errorRadarrNothingInCalendar'));
     }
 
     var lastDate = null;
     var response = [];
     _.forEach(episode, function(n, key) {
-      var done = (n.hasFile ? i18n.__('SonarrDone') : '');
+      var done = (n.hasFile ? i18n.__('RadarrDone') : '');
 
       // Add an empty line to break list of multiple days
       if(lastDate != null && n.airDate != lastDate) response.push(' ');
@@ -187,7 +187,7 @@ SonarrMessage.prototype.performCalendarSearch = function(futureDays) {
       lastDate = n.airDate;
     });
 
-    logger.info(i18n.__("logSonarrFoundSeries", self.username, response.join(',')));
+    logger.info(i18n.__("logRadarrFoundSeries", self.username, response.join(',')));
 
     return self._sendMessage(response.join('\n'), []);
   })
@@ -200,27 +200,27 @@ SonarrMessage.prototype.performCalendarSearch = function(futureDays) {
 /*
  * handle the flow of adding a new series
  */
-SonarrMessage.prototype.sendSeriesList = function(seriesName) {
+RadarrMessage.prototype.sendSeriesList = function(seriesName) {
   var self = this;
 
   self.test = 'hello';
 
-  logger.info(i18n.__('logSonarrQueryCommandSent', self.username));
+  logger.info(i18n.__('logRadarrQueryCommandSent', self.username));
 
-  self.sonarr.get('series/lookup', { 'term': seriesName }).then(function(result) {
+  self.radarr.get('series/lookup', { 'term': seriesName }).then(function(result) {
     if (!result.length) {
-      throw new Error(i18n.__('errorSonarrSerieNotFound', seriesName));
+      throw new Error(i18n.__('errorRadarrSerieNotFound', seriesName));
     }
 
     var series = result;
 
-    logger.info(i18n.__('logSonarrUserSerieRequested', self.username, seriesName));
+    logger.info(i18n.__('logRadarrUserSerieRequested', self.username, seriesName));
 
     var seriesList = [], keyboardList = [];
 
     series.length = (series.length > config.bot.maxResults ? config.bot.maxResults : series.length);
 
-    var response = [i18n.__('botChatSonarrFoundNSeries', series.length)];
+    var response = [i18n.__('botChatRadarrFoundNSeries', series.length)];
 
     _.forEach(series, function(n, key) {
 
@@ -253,11 +253,11 @@ SonarrMessage.prototype.sendSeriesList = function(seriesName) {
 
     response.push(i18n.__('selectFromMenu'));
 
-    logger.info(i18n.__("logSonarrFoundSeries2", self.username, keyboardList.join(',')));
+    logger.info(i18n.__("logRadarrFoundSeries2", self.username, keyboardList.join(',')));
 
     // set cache
     self.cache.set('seriesList' + self.user.id, seriesList);
-    self.cache.set('state' + self.user.id, state.sonarr.CONFIRM);
+    self.cache.set('state' + self.user.id, state.radarr.CONFIRM);
 
     return self._sendMessage(response.join('\n'), keyboardList);
   })
@@ -266,31 +266,31 @@ SonarrMessage.prototype.sendSeriesList = function(seriesName) {
   });
 };
 
-SonarrMessage.prototype.confirmShowSelect = function(displayName) {
+RadarrMessage.prototype.confirmShowSelect = function(displayName) {
   var self = this;
 
   var seriesList = self.cache.get('seriesList' + self.user.id);
 
   if (!seriesList) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   var series = _.filter(seriesList, function(item) { return item.keyboardValue === displayName; })[0];
   if (!series) {
-    return self._sendMessage(new Error(i18n.__('botChatSonarrSerieNotFound', displayName)));
+    return self._sendMessage(new Error(i18n.__('botChatRadarrSerieNotFound', displayName)));
   }
 
   // use workflow to run async tasks
   var workflow = new (require('events').EventEmitter)();
 
-  // check for existing series on sonarr
-  workflow.on('checkSonarrSeries', function () {
-    self.sonarr.get('series').then(function(result) {
-      logger.info(i18n.__('logSonarrLookingForExistingSeries', self.username));
+  // check for existing series on radarr
+  workflow.on('checkRadarrSeries', function () {
+    self.radarr.get('series').then(function(result) {
+      logger.info(i18n.__('logRadarrLookingForExistingSeries', self.username));
 
       var existingSeries = _.filter(result, function(item) { return item.tvdbId === series.tvdbId; })[0];
       if (existingSeries) {
-        throw new Error(i18n.__('errorSonarrSerieAlreadyTracked'));
+        throw new Error(i18n.__('errorRadarrSerieAlreadyTracked'));
       }
       workflow.emit('confirmShow');
     }).catch(function(error) {
@@ -298,17 +298,17 @@ SonarrMessage.prototype.confirmShowSelect = function(displayName) {
     });
   });
 
-  // check for existing series on sonarr
+  // check for existing series on radarr
   workflow.on('confirmShow', function () {
-    self.sonarr.get('series').then(function(result) {
-      logger.info(i18n.__('logSonarrConfirmCorrectShow', series.keyboardValue, self.username));
+    self.radarr.get('series').then(function(result) {
+      logger.info(i18n.__('logRadarrConfirmCorrectShow', series.keyboardValue, self.username));
 
       var keyboardList = [[i18n.__('globalYes')], [i18n.__('globalNo')]];
 
       var response = ['*' + series.title + ' (' + series.year + ')*\n'];
 
       response.push(series.plot + '\n');
-      response.push(i18n.__('botChatSonarrIsShowCorrect'));
+      response.push(i18n.__('botChatRadarrIsShowCorrect'));
       response.push(i18n.__('globalArrowYes'));
       response.push(i18n.__('globalArrowNo'));
 
@@ -318,7 +318,7 @@ SonarrMessage.prototype.confirmShowSelect = function(displayName) {
       }
 
       // set cache
-      self.cache.set('state' + self.user.id, state.sonarr.PROFILE);
+      self.cache.set('state' + self.user.id, state.radarr.PROFILE);
       self.cache.set('seriesId' + self.user.id, series.id);
 
       return self._sendMessage(response.join('\n'), keyboardList);
@@ -331,16 +331,16 @@ SonarrMessage.prototype.confirmShowSelect = function(displayName) {
   /**
    * Initiate the workflow
    */
-  workflow.emit('checkSonarrSeries');
+  workflow.emit('checkRadarrSeries');
 };
 
-SonarrMessage.prototype.sendProfileList = function(displayName) {
+RadarrMessage.prototype.sendProfileList = function(displayName) {
   var self = this;
 
   var seriesId = self.cache.get('seriesId' + self.user.id);
 
   if (!seriesId) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   if(displayName == 'No'){
@@ -350,16 +350,16 @@ SonarrMessage.prototype.sendProfileList = function(displayName) {
   // use workflow to run async tasks
   var workflow = new (require('events').EventEmitter)();
 
-  // get the sonarr profiles
-  workflow.on('getSonarrProfiles', function () {
-    self.sonarr.get('profile').then(function(result) {
+  // get the radarr profiles
+  workflow.on('getRadarrProfiles', function () {
+    self.radarr.get('profile').then(function(result) {
       if (!result.length) {
-        throw new Error(i18n.__('errorSonarrCouldntGetProfile'));
+        throw new Error(i18n.__('errorRadarrCouldntGetProfile'));
       }
 
       var profiles = result;
 
-      logger.info(i18n.__('logSonarrProfileListRequested', self.username));
+      logger.info(i18n.__('logRadarrProfileListRequested', self.username));
 
       var profileList = [], keyboardList = [], keyboardRow = [];
       var response = ['*Found ' + profiles.length + ' profiles*'];
@@ -383,10 +383,10 @@ SonarrMessage.prototype.sendProfileList = function(displayName) {
 
       response.push(i18n.__('selectFromMenu'));
 
-      logger.info(i18n.__('logSonarrFoundProfile', self.username, keyboardList.join(',')));
+      logger.info(i18n.__('logRadarrFoundProfile', self.username, keyboardList.join(',')));
 
       // set cache
-      self.cache.set('state' + self.user.id, state.sonarr.MONITOR);
+      self.cache.set('state' + self.user.id, state.radarr.MONITOR);
       self.cache.set('seriesProfileList' + self.user.id, profileList);
 
       return self._sendMessage(response.join('\n'), keyboardList);
@@ -399,27 +399,27 @@ SonarrMessage.prototype.sendProfileList = function(displayName) {
   /**
    * Initiate the workflow
    */
-  workflow.emit('getSonarrProfiles');
+  workflow.emit('getRadarrProfiles');
 };
 
-SonarrMessage.prototype.sendMonitorList = function(profileName) {
+RadarrMessage.prototype.sendMonitorList = function(profileName) {
   var self = this;
 
   var profileList = self.cache.get('seriesProfileList' + self.user.id);
   if (!profileList) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   var profile = _.filter(profileList, function(item) { return item.name === profileName; })[0];
   if (!profile) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  logger.info(i18n.__('logSonarrMonitorListRequest', self.username));
+  logger.info(i18n.__('logRadarrMonitorListRequest', self.username));
 
   var monitor = ['future', 'all', 'none', 'latest', 'first'];
   var monitorList = [], keyboardList = [], keyboardRow = [];
-  var response = [i18n.__('botChatSonarrSelectSeason')];
+  var response = [i18n.__('botChatRadarrSelectSeason')];
   _.forEach(monitor, function(n, key) {
     monitorList.push({ 'type': n });
 
@@ -438,29 +438,29 @@ SonarrMessage.prototype.sendMonitorList = function(profileName) {
 
   response.push(i18n.__('selectFromMenu'));
 
-  logger.info(i18n.__('logSonarrFoundMonitorType', self.username, keyboardList.join(',')));
+  logger.info(i18n.__('logRadarrFoundMonitorType', self.username, keyboardList.join(',')));
 
   self.cache.set('seriesProfileId' + self.user.id, profile.profileId);
   self.cache.set('seriesMonitorList' + self.user.id, monitorList);
-  self.cache.set('state' + self.user.id, state.sonarr.TYPE);
+  self.cache.set('state' + self.user.id, state.radarr.TYPE);
 
   return self._sendMessage(response.join('\n'), keyboardList);
 };
 
-SonarrMessage.prototype.sendTypeList = function(monitorName) {
+RadarrMessage.prototype.sendTypeList = function(monitorName) {
   var self = this;
 
   var monitorList = self.cache.get('seriesMonitorList' + self.user.id);
   if (!monitorList) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   var monitor = _.filter(monitorList, function(item) { return item.type === monitorName; })[0];
   if (!monitor) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  logger.info(i18n.__('logSonarrUserSeriesTypeRequested', self.username));
+  logger.info(i18n.__('logRadarrUserSeriesTypeRequested', self.username));
 
   var type = ['standard', 'airs daily', 'anime'];
   var typeList = [], keyboardList = [], keyboardRow = [];
@@ -483,36 +483,36 @@ SonarrMessage.prototype.sendTypeList = function(monitorName) {
 
   response.push(i18n.__('selectFromMenu'));
 
-  logger.info(i18n.__('logSonarrFoundSeriesType', self.username, keyboardList.join(',')));
+  logger.info(i18n.__('logRadarrFoundSeriesType', self.username, keyboardList.join(',')));
 
   self.cache.set('seriesMonitorId' + self.user.id, monitor.type);
   self.cache.set('seriesTypeList' + self.user.id, typeList);
-  self.cache.set('state' + self.user.id, state.sonarr.FOLDER);
+  self.cache.set('state' + self.user.id, state.radarr.FOLDER);
 
   return self._sendMessage(response.join('\n'), keyboardList);
 };
 
-SonarrMessage.prototype.sendFolderList = function(typeName) {
+RadarrMessage.prototype.sendFolderList = function(typeName) {
   var self = this;
 
   var typeList = self.cache.get('seriesTypeList' + self.user.id);
   if (!typeList) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   var type = _.filter(typeList, function(item) { return item.type === typeName; })[0];
   if (!type) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  self.sonarr.get('rootfolder').then(function(result) {
+  self.radarr.get('rootfolder').then(function(result) {
     if (!result.length) {
-      throw new Error(i18n.__("errorSonarrCouldntFindFolders"));
+      throw new Error(i18n.__("errorRadarrCouldntFindFolders"));
     }
 
     var folders = result;
 
-    logger.info(i18n.__('logSonarrFolderListRequested', self.username));
+    logger.info(i18n.__('logRadarrFolderListRequested', self.username));
 
     var folderList = [], keyboardList = [];
     var response = ['*Found ' + folders.length + ' folders*'];
@@ -525,12 +525,12 @@ SonarrMessage.prototype.sendFolderList = function(typeName) {
     });
     response.push(i18n.__('selectFromMenu'));
 
-    logger.info(i18n.__('logSonarrFoundFolders', self.username, keyboardList.join(',')));
+    logger.info(i18n.__('logRadarrFoundFolders', self.username, keyboardList.join(',')));
 
     // set cache
     self.cache.set('seriesTypeId' + self.user.id, type.type);
     self.cache.set('seriesFolderList' + self.user.id, folderList);
-    self.cache.set('state' + self.user.id, state.sonarr.SEASON_FOLDER);
+    self.cache.set('state' + self.user.id, state.radarr.SEASON_FOLDER);
 
     return self._sendMessage(response.join('\n'), keyboardList);
   })
@@ -539,20 +539,20 @@ SonarrMessage.prototype.sendFolderList = function(typeName) {
   });
 };
 
-SonarrMessage.prototype.sendSeasonFolderList = function(folderName) {
+RadarrMessage.prototype.sendSeasonFolderList = function(folderName) {
   var self = this;
 
   var folderList = self.cache.get('seriesFolderList' + self.user.id);
   if (!folderList) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   var folder = _.filter(folderList, function(item) { return item.path === folderName; })[0];
   if (!folder) {
-    return self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  logger.info(i18n.__('logSonarrSeasonFoldersListRequested', self.username));
+  logger.info(i18n.__('logRadarrSeasonFoldersListRequested', self.username));
 
   var seasonFolder = [i18n.__('globalYes'), i18n.__('globalNo')];
   var seasonFolderList = [], keyboardList = [], keyboardRow = [];
@@ -575,16 +575,16 @@ SonarrMessage.prototype.sendSeasonFolderList = function(folderName) {
 
   response.push(i18n.__('selectFromMenu'));
 
-    logger.info(i18n.__('logSonarrFoundSeasonsFolderTypes', self.username, keyboardList.join(',')));
+    logger.info(i18n.__('logRadarrFoundSeasonsFolderTypes', self.username, keyboardList.join(',')));
 
   self.cache.set('seriesFolderId' + self.user.id, folder.folderId);
   self.cache.set('seriesSeasonFolderList' + self.user.id, seasonFolderList);
-  self.cache.set('state' + self.user.id, state.sonarr.ADD_SERIES);
+  self.cache.set('state' + self.user.id, state.radarr.ADD_SERIES);
 
   return self._sendMessage(response.join('\n'), keyboardList);
 };
 
-SonarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
+RadarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
   var self = this;
 
   var seriesId         = self.cache.get('seriesId' + self.user.id);
@@ -601,7 +601,7 @@ SonarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
   var seasonFolderList = self.cache.get('seriesSeasonFolderList' + self.user.id);
 
   if (!seasonFolderList) {
-    self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+    self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   var series       = _.filter(seriesList, function(item) { return item.id === seriesId; })[0];
@@ -666,23 +666,23 @@ SonarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
       });
       break;
     default:
-      self._sendMessage(new Error(i18n.__('errorSonarrWentWrong')));
+      self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
   // update seasons to be monitored
   postOpts.seasons = series.seasons;
 
-  logger.info(i18n.__("logSonarrSerieAddedWithOptions", self.username, series.title, JSON.stringify(postOpts)));
+  logger.info(i18n.__("logRadarrSerieAddedWithOptions", self.username, series.title, JSON.stringify(postOpts)));
 
-  self.sonarr.post('series', postOpts).then(function(result) {
+  self.radarr.post('series', postOpts).then(function(result) {
     if (!result) {
-      throw new Error(i18n.__("logSonarrSerieCantAdd"));
+      throw new Error(i18n.__("logRadarrSerieCantAdd"));
     }
 
-    logger.info(i18n.__("logSonarrSerieAdded", self.username, series.title));
+    logger.info(i18n.__("logRadarrSerieAdded", self.username, series.title));
 
     if (self._isBotAdmin() && self.adminId !== self.user.id) {
-      self.bot.sendMessage(self.user.id, i18n.__("botChatSonarrSerieAddedBy", series.title, self.username), {
+      self.bot.sendMessage(self.user.id, i18n.__("botChatRadarrSerieAddedBy", series.title, self.username), {
         'selective': 2,
         'parse_mode': 'Markdown',
         'reply_markup': {
@@ -691,7 +691,7 @@ SonarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
       });
     }
 
-    return self.bot.sendMessage(self.user.id, i18n.__("botChatSonarrSerieAdded", series.title), {
+    return self.bot.sendMessage(self.user.id, i18n.__("botChatRadarrSerieAdded", series.title), {
       'selective': 2,
       'parse_mode': 'Markdown',
       'reply_markup': {
@@ -711,7 +711,7 @@ SonarrMessage.prototype.sendAddSeries = function(seasonFolderName) {
 /*
  * private methods
  */
-SonarrMessage.prototype._sendMessage = function(message, keyboard) {
+RadarrMessage.prototype._sendMessage = function(message, keyboard) {
   var self = this;
   keyboard = keyboard || null;
 
@@ -738,14 +738,14 @@ SonarrMessage.prototype._sendMessage = function(message, keyboard) {
   return self.bot.sendMessage(self.user.id, message, options);
 };
 
-SonarrMessage.prototype._isBotAdmin = function() {
+RadarrMessage.prototype._isBotAdmin = function() {
   if (this.adminId === this.user.id) {
     return true;
   }
   return false;
 };
 
-SonarrMessage.prototype._clearCache = function() {
+RadarrMessage.prototype._clearCache = function() {
   var self = this;
 
   logger.info(i18n.__("logClearCache", self.username));
@@ -763,4 +763,4 @@ SonarrMessage.prototype._clearCache = function() {
   });
 };
 
-module.exports = SonarrMessage;
+module.exports = RadarrMessage;
