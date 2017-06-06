@@ -70,6 +70,7 @@ bot.onText(/\/help/, function(msg) {
   sendCommands(fromId);
 });
 
+
 /*
  * handle radarr commands
  */
@@ -141,6 +142,13 @@ bot.on('message', function(msg) {
        return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
     }
   }
+  if (message == "Accept Defaults")
+{
+      verifyUser(user.id);
+
+    logger.info(i18n.__('botChatQueryFolderChoose',user.id,message));
+    return radarr.sendAddMovie("default");
+}
 
   // get the current cache state
   var currentState = cache.get('state' + user.id);
@@ -177,11 +185,11 @@ bot.on('message', function(msg) {
     return radarr.sendProfileList(message);
   }
 
-  // if (currentState === state.radarr.MONITOR) {
-  //   verifyUser(user.id);
-  //   logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
-  //   return radarr.sendMonitorList(message);
-  // }
+  if (currentState === state.radarr.DEFAULT) {
+    verifyUser(user.id);
+    logger.info(i18n.__('botChatQueryMovieChoose', user.id, message));
+    return radarr.sendAcceptDefault(message);
+  }
 
   // if (currentState === state.radarr.TYPE) {
   //   verifyUser(user.id);
@@ -200,6 +208,8 @@ bot.on('message', function(msg) {
   //   logger.info(i18n.__('botChatQuerySeasonFolderChoose', user.id, message));
   //   return radarr.sendSeasonFolderList(message);
   // }
+
+
 
   if (currentState === state.radarr.ADD_MOVIE) {
     verifyUser(user.id);

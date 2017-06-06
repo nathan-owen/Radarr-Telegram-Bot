@@ -320,7 +320,7 @@ RadarrMessage.prototype.confirmMovieSelect = function(displayName) {
       }
 
       // set cache
-      self.cache.set('state' + self.user.id, state.radarr.PROFILE);
+      self.cache.set('state' + self.user.id, state.radarr.DEFAULT);
       self.cache.set('movieId' + self.user.id, movie.id);
 
       return self._sendMessage(response.join('\n'), keyboardList,false);
@@ -345,9 +345,7 @@ RadarrMessage.prototype.sendProfileList = function(displayName) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  if(displayName == 'No'){
-    return self._sendMessage(new Error(i18n.__('globalAborted')));
-  }
+
 
   // use workflow to run async tasks
   var workflow = new (require('events').EventEmitter)();
@@ -388,9 +386,15 @@ RadarrMessage.prototype.sendProfileList = function(displayName) {
       logger.info(i18n.__('logRadarrFoundProfile', self.username, keyboardList.join(',')));
 
       // set cache
+      if (displayName == 'Yes')
+      {
+      self.cache.set('state' + self.user.id, state.radarr.ADD_MOVIE);
+      self.cache.set('default' + self.user.id,true);    
+    }
+    else{      
       self.cache.set('state' + self.user.id, state.radarr.FOLDER);
       self.cache.set('movieProfileList' + self.user.id, profileList);
-
+    }
       return self._sendMessage(response.join('\n'), keyboardList);
     })
     .catch(function(error) {
@@ -404,47 +408,34 @@ RadarrMessage.prototype.sendProfileList = function(displayName) {
   workflow.emit('getRadarrProfiles');
 };
 
-RadarrMessage.prototype.sendMonitorList = function(profileName) {
+RadarrMessage.prototype.sendAcceptDefault = function(displayName) {
   var self = this;
 
-  var profileList = self.cache.get('movieProfileList' + self.user.id);
-  if (!profileList) {
+  var movieId = self.cache.get('movieId' + self.user.id);
+
+  if (!movieId) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
-  var profile = _.filter(profileList, function(item) { return item.name === profileName; })[0];
-  if (!profile) {
-    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
+  if(displayName == 'No'){
+    return self._sendMessage(new Error(i18n.__('globalAborted')));
   }
 
-  logger.info(i18n.__('logRadarrMonitorListRequest', self.username));
+  logger.info(i18n.__('logRadarrDefaultListRequest', self.username));
 
-  var monitor = ['yes','no'];
-  var monitorList = [], keyboardList = [], keyboardRow = [];
-  var response = [i18n.__('botChatRadarrSelectSeason')];
-  _.forEach(monitor, function(n, key) {
-    monitorList.push({ 'type': n });
+      var keyboardList = [['Accept Defaults'], ["Custom"]];
 
-    response.push('➸ ' + n);
+      var response = ['*Accept Defaults*\n'];
 
-    keyboardRow.push(n);
-    if (keyboardRow.length === 2) {
-      keyboardList.push(keyboardRow);
-      keyboardRow = [];
-    }
-  });
+      response.push("What would you like to do?");
+      response.push("Accept Defaults (Recommended)\n 1080p HD\n Stored In: /media/");
+      response.push("Custom");
 
-  if (keyboardRow.length === 1) {
-    keyboardList.push([keyboardRow[0]]);
-  }
+
 
   response.push(i18n.__('selectFromMenu'));
 
-  logger.info(i18n.__('logRadarrFoundMonitorType', self.username, keyboardList.join(',')));
-
-  self.cache.set('movieProfileId' + self.user.id, profile.profileId);
-  self.cache.set('movieMonitorList' + self.user.id, monitorList);
-  self.cache.set('state' + self.user.id, state.radarr.TYPE);
+  self.cache.set('state' + self.user.id, state.radarr.PROFILE);
 
   return self._sendMessage(response.join('\n'), keyboardList);
 };
@@ -496,54 +487,27 @@ RadarrMessage.prototype.sendFolderList = function(profileName) {
   });
 };
 
-RadarrMessage.prototype.sendSeasonFolderList = function(folderName) {
-  var self = this;
 
-  var folderList = self.cache.get('movieFolderList' + self.user.id);
-  if (!folderList) {
-    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
-  }
-
-  var folder = _.filter(folderList, function(item) { return item.path === folderName; })[0];
-  if (!folder) {
-    return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
-  }
-
-  logger.info(i18n.__('logRadarrSeasonFoldersListRequested', self.username));
-
-  var seasonFolder = [i18n.__('globalYes'), i18n.__('globalNo')];
-  var seasonFolderList = [], keyboardList = [], keyboardRow = [];
-  var response = [i18n.__('askUsingSeasonFolders')];
-  _.forEach(seasonFolder, function(n, key) {
-    seasonFolderList.push({ 'type': n });
-
-    response.push('➸ ' + n);
-
-    keyboardRow.push(n);
-    if (keyboardRow.length === 2) {
-      keyboardList.push(keyboardRow);
-      keyboardRow = [];
-    }
-  });
-
-  if (keyboardRow.length === 1) {
-    keyboardList.push([keyboardRow[0]]);
-  }
-
-  response.push(i18n.__('selectFromMenu'));
-
-    logger.info(i18n.__('logRadarrFoundSeasonsFolderTypes', self.username, keyboardList.join(',')));
-
-  self.cache.set('movieFolderId' + self.user.id, folder.folderId);
-  self.cache.set('movieSeasonFolderList' + self.user.id, seasonFolderList);
-  self.cache.set('state' + self.user.id, state.radarr.ADD_SERIES);
-
-  return self._sendMessage(response.join('\n'), keyboardList);
-};
 
 RadarrMessage.prototype.sendAddMovie = function(folderName) {
   var self = this;
+  var movieId         = self.cache.get('movieId' + self.user.id);
+  var movieList       = self.cache.get('movieList' + self.user.id);
+  var movie       = _.filter(movieList, function(item) { return item.id === movieId; })[0];
 
+  var postOpts              = {};
+  postOpts.tmdbId           = movie.tmdbID;
+  postOpts.title            = movie.title;
+  postOpts.titleSlug        = movie.titleSlug;
+  postOpts.monitored        = true;
+  postOpts.images           = [];
+  var addOptions            = {};
+  addOptions.searchForMovie = true;
+  postOpts.addOptions       = addOptions;
+
+
+if(folderName != "default")
+{
   var folderList = self.cache.get('movieFolderList' + self.user.id);
   if (!folderList) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
@@ -556,41 +520,30 @@ RadarrMessage.prototype.sendAddMovie = function(folderName) {
     self.cache.set('movieFolderId' + self.user.id, folder.folderId);
 
 
-  var movieId         = self.cache.get('movieId' + self.user.id);
-  var movieList       = self.cache.get('movieList' + self.user.id);
   var profileId        = self.cache.get('movieProfileId' + self.user.id);
   var profileList      = self.cache.get('movieProfileList' + self.user.id);
-  //var monitorId        = self.cache.get('movieMonitorId' + self.user.id);
-  //var monitorList      = self.cache.get('movieMonitorList' + self.user.id);
-  //var typeId           = self.cache.get('movieTypeId' + self.user.id);
-  //var typeList         = self.cache.get('movieTypeList' + self.user.id);
   var folderId         = self.cache.get('movieFolderId' + self.user.id);
   var folderList       = self.cache.get('movieFolderList' + self.user.id);
-  //var seasonFolderId   = seasonFolderName;
-  //var seasonFolderList = self.cache.get('movieSeasonFolderList' + self.user.id);
-
-
-
-  var movie       = _.filter(movieList, function(item) { return item.id === movieId; })[0];
+    
   var profile      = _.filter(profileList, function(item) { return item.profileId === profileId; })[0];
- // var monitor      = _.filter(monitorList, function(item) { return item.type === monitorId; })[0];
-  //var type         = _.filter(typeList, function(item) { return item.type === typeId; })[0];
   var folder       = _.filter(folderList, function(item) { return item.folderId === folderId; })[0];
-  //var seasonFolder = _.filter(seasonFolderList, function(item) { return item.type === seasonFolderId; })[0];
-
-  var postOpts              = {};
-  postOpts.tmdbId           = movie.tmdbID;
-  postOpts.title            = movie.title;
-  postOpts.titleSlug        = movie.titleSlug;
   postOpts.rootFolderPath   = folder.path;
-//  postOpts.seasonFolder     = (seasonFolder.type === i18n.__("globalYes") ? true : false);
-  postOpts.monitored        = true;
-  //postOpts.movieType       = (type.type === 'airs daily' ? 'daily' : type.type);
   postOpts.qualityProfileId = profile.profileId;
-  postOpts.images           = [];
-  var addOptions            = {};
-  addOptions.searchForMovie = true;
-  postOpts.addOptions       = addOptions;
+
+}
+else
+{
+  postOpts.rootFolderPath = config.defaults.rootFolder;
+  postOpts.qualityProfileId = config.defaults.profileId;
+}
+
+
+
+
+
+
+
+
 
 
   logger.info(i18n.__("logRadarrMovieAddedWithOptions", self.username, movie.title, JSON.stringify(postOpts)));
@@ -675,7 +628,7 @@ RadarrMessage.prototype._clearCache = function() {
     'movieProfileList', 'movieFolderId', 'movieFolderList',
     'movieMonitorId', 'movieMonitorList', 'movieFolderId',
     'movieFolderList', 'movieTypeId', 'movieTypeList',
-    'movieSeasonFolderList', 'state'
+    'movieSeasonFolderList', 'state','default'
   ];
 
   return _(cacheItems).forEach(function(item) {
