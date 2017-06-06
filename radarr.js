@@ -70,6 +70,7 @@ bot.onText(/\/help/, function(msg) {
   sendCommands(fromId);
 });
 
+
 /*
  * handle radarr commands
  */
@@ -95,12 +96,12 @@ bot.on('message', function(msg) {
     }  
   }
 
-  if(/^\/wanted$/g.test(message)) {
-    verifyAdmin(user.id);
-    if(isAdmin(user.id)){
-      return radarr.performWantedSearch();
-    }
-  }
+  // if(/^\/wanted$/g.test(message)) {
+  //   verifyAdmin(user.id);
+  //   if(isAdmin(user.id)){
+  //     return radarr.performWantedSearch();
+  //   }
+  // }
 
   if(/^\/refresh$/g.test(message)) {
     verifyAdmin(user.id);
@@ -135,12 +136,19 @@ bot.on('message', function(msg) {
    */
   if (/^\/[Qq](uery)? (.+)$/g.test(message)) {
     if(isAuthorized(user.id)){
-       var seriesName = /^\/[Qq](uery)? (.+)/g.exec(message)[2] || null;
-       return radarr.sendSeriesList(seriesName);
+       var movieName = /^\/[Qq](uery)? (.+)/g.exec(message)[2] || null;
+       return radarr.sendMovieList(movieName);
     } else {
        return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
     }
   }
+  if (message == "Accept Defaults")
+{
+      verifyUser(user.id);
+
+    logger.info(i18n.__('botChatQueryFolderChoose',user.id,message));
+    return radarr.sendAddMovie("default");
+}
 
   // get the current cache state
   var currentState = cache.get('state' + user.id);
@@ -167,43 +175,47 @@ bot.on('message', function(msg) {
 
   if (currentState === state.radarr.CONFIRM) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeriesConfirm', user.id, message));
-    return radarr.confirmShowSelect(message);
+    logger.info(i18n.__('botChatQueryMovieConfirm', user.id, message));
+    return radarr.confirmMovieSelect(message);
   }
 
   if (currentState === state.radarr.PROFILE) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeriesChoose', user.id, message));
+    logger.info(i18n.__('botChatQueryMovieChoose', user.id, message));
     return radarr.sendProfileList(message);
   }
 
-  if (currentState === state.radarr.MONITOR) {
+  if (currentState === state.radarr.DEFAULT) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
-    return radarr.sendMonitorList(message);
+    logger.info(i18n.__('botChatQueryMovieChoose', user.id, message));
+    return radarr.sendAcceptDefault(message);
   }
 
-  if (currentState === state.radarr.TYPE) {
-    verifyUser(user.id);
-    logger.info(i18n.__('botChatQueryTypeChoose', user.id, message));
-    return radarr.sendTypeList(message);
-  }
+  // if (currentState === state.radarr.TYPE) {
+  //   verifyUser(user.id);
+  //   logger.info(i18n.__('botChatQueryTypeChoose', user.id, message));
+  //   return radarr.sendTypeList(message);
+  // }
 
   if (currentState === state.radarr.FOLDER) {
     verifyUser(user.id);
-    logger.info(i18n.__('botChatQueryFolderChoose', user.id, message));
+    logger.info(i18n.__('botChatQueryProfileChoose', user.id, message));
     return radarr.sendFolderList(message);
   }
 
-  if (currentState === state.radarr.SEASON_FOLDER) {
-    verifyUser(user.id);
-    logger.info(i18n.__('botChatQuerySeasonFolderChoose', user.id, message));
-    return radarr.sendSeasonFolderList(message);
-  }
+  // if (currentState === state.radarr.SEASON_FOLDER) {
+  //   verifyUser(user.id);
+  //   logger.info(i18n.__('botChatQuerySeasonFolderChoose', user.id, message));
+  //   return radarr.sendSeasonFolderList(message);
+  // }
 
-  if (currentState === state.radarr.ADD_SERIES) {
+
+
+  if (currentState === state.radarr.ADD_MOVIE) {
     verifyUser(user.id);
-    return radarr.sendAddSeries(message);
+
+    logger.info(i18n.__('botChatQueryFolderChoose',user.id,message));
+    return radarr.sendAddMovie(message);
   }
 
 });
@@ -681,7 +693,7 @@ function sendCommands(fromId) {
 
   if (isAdmin(fromId)) {
     response.push(i18n.__('botChatHelp_9'));
-    response.push(i18n.__('botChatHelp_10'));
+    //response.push(i18n.__('botChatHelp_10'));
     response.push(i18n.__('botChatHelp_11'));
     response.push(i18n.__('botChatHelp_12'));
     response.push(i18n.__('botChatHelp_13'));
