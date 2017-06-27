@@ -501,8 +501,10 @@ RadarrMessage.prototype.sendAddMovie = function(folderName) {
   postOpts.titleSlug        = movie.titleSlug;
   postOpts.monitored        = true;
   postOpts.images           = [];
+  postOpts.minimumAvailability = "preDb";
   var addOptions            = {};
   addOptions.searchForMovie = true;
+
   postOpts.addOptions       = addOptions;
 
 
@@ -536,17 +538,7 @@ else
   postOpts.rootFolderPath = config.defaults.rootFolder;
   postOpts.qualityProfileId = config.defaults.profileId;
 }
-
-
-
-
-
-
-
-
-
-
-  logger.info(i18n.__("logRadarrMovieAddedWithOptions", self.username, movie.title, JSON.stringify(postOpts)));
+ logger.info(i18n.__("logRadarrMovieAddedWithOptions", self.username, movie.title, JSON.stringify(postOpts)));
 
   self.radarr.post('movie', postOpts).then(function(result) {
     if (!result) {
