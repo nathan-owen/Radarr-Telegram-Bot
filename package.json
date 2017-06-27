@@ -1,6 +1,6 @@
 {
   "name": "radarr-telegram-bot",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "A Telegram bot to interact with your Radarr Web App",
   "dependencies": {
     "bluebird": "v3.0.6",
@@ -24,8 +24,7 @@
   },
   "author": "Nathan Owen <nathan.owen@live.com>",
   "license": "MIT",
-    "scripts": {
-        "start": "node radarr.js"
-    }
-
+  "scripts": {
+    "start": "node radarr.js"
+  }
 }
