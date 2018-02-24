@@ -210,7 +210,7 @@ RadarrMessage.prototype.sendMovieList = function(movieName) {
 
   logger.info(i18n.__('logRadarrQueryCommandSent', self.username));
 
-  self.radarr.get('movies/lookup', { 'term': movieName }).then(function(result) {
+  self.radarr.get('movie/lookup', { 'term': movieName }).then(function(result) {
     if (!result.length) {
       throw new Error(i18n.__('errorRadarrMovieNotFound', movieName));
     }
