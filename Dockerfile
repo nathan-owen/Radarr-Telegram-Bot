@@ -1,11 +1,12 @@
-FROM node:5.2
+FROM node:8
 
 RUN mkdir /app
 
 WORKDIR /app
-COPY package.json ./
+
+COPY package*.json ./
 RUN npm install
 
 COPY . ./
 
-CMD ["node", "radarr.js"]
+CMD ["npm", "start"]
