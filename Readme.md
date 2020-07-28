@@ -67,67 +67,84 @@ node radarr.js
 ### First use
 Send the bot the `/auth` command with the password you created in `config.json`
 
-### Adding a series
+### Adding a Movie
 
-Send the bot a message with the series name
+Send the bot a message with the Movie name
 
-`/q game of`
+`/q Rambo`
 
 The bot will reply with
 
 ```
-Found 6 series:
-1) Game of Crowns - 2014
-2) Game of Thrones - 2011
-3) Game of Silence
-4) Game of Silence (TR) - 2012
-5) The Genius Game - 2013
-6) More Than A Game - The Story of Football
+Found 15 movie 
+➸ Rambo - 2008
+➸ Rambo: Last Blood - 2019 
+➸ Rambo III - 1988
+➸ Rambo: First Blood Part II - 1985 
+➸ Rambo - 2020 
+➸ Arthur Rambo 
+➸ Rambo Zambo - 1984 
+➸ Arthur Rambo 
+➸ Rambo Tanggo Part III - 1984 
+➸ Rambo: The Rescue 
+➸ Rambo: To Hell and Back - 2010 
+➸ Johny Tan-Go Rambo Part III 
+➸ An American Hero's Journey: The Rambo Trilogy 
+➸ Rambo and the Force of freedom - The Movie - 1986 
+➸ Remo, Rambo, Reagan and Reds: The Eighties Action Movie Explosion - 2014 
+
+Please select from the menu below.
 ```
 
-Use the custom keyboard to select the series.
+Use the custom keyboard to select the Movie.
 
-![Step One](https://raw.githubusercontent.com/onedr0p/telegram-sonarr-bot/master/examples/step_1.png)
+![Step One](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_1.jpg)
+
+The bot will provide more info about the movie and ask you to confirm.
+
+![Step Two](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_2.jpg)
+
+The bot will ask you if you'd like to accept defaults or if you'd like to specify the settings.
+
+![Step Three](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_3.jpg)
+
+If you accepted defaults, it'll add the movie and you're done.
+
+Otherwise,
 
 The bot will ask you for the quality
 
 ```
-Found 2 profiles:
-1) SD 2) HD
+Found 6 profiles
+➸ Any
+➸ SD
+➸ HD-720p
+➸ HD-1080p
+➸ Ultra-HD
+➸ HD - 720p/1080p
+
+Please select from the menu below.
 ```
 
 Send the profile using the custom keyboard
 
-![Step Two](https://raw.githubusercontent.com/onedr0p/telegram-sonarr-bot/master/examples/step_2.png)
+![Step Four](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_4.jpg)
 
-The bot will ask you where the path you want the series to go
+The bot will ask you where the path you want the movie to go
 
 ```
-Found 2 folders:
-1) /Television/Airing/
-2) /Television/Archived/
+Found 1 folders
+➸ /media/
+
+Please select from the menu below.
 ```
 
 Send the folder using the custom keyboard
 
-![Step Two](https://raw.githubusercontent.com/onedr0p/telegram-sonarr-bot/master/examples/step_3.png)
+![Step Five](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_5.jpg)
 
-Lastly, the bot will ask you which seasons you would like to monitor/download
 
-```
-Select which seasons to monitor:
-1) future
-2) all
-3) none
-4) latest
-5) first
-```
-
-Send the monitor type using the custom keyboard
-
-![Step Two](https://raw.githubusercontent.com/onedr0p/telegram-sonarr-bot/master/examples/step_4.png)
-
-If everything goes well, you'll see a text from the bot saying the series was added.
+If everything goes well, you'll see a text from the bot saying the movie was added.
 
 ### Notifications
 Sonarr can be setup to send notifications to a user or a group chat when new content is added.  
@@ -177,13 +194,13 @@ docker run --name telegram-sonarr-bot \
   -e SONARR_PASSWORD=
   telegram-sonarr-bot
 ```
-
-**Prebuilt** Docker image for this bot can be found [here](https://hub.docker.com/r/subzero79/docker-telegram-sonarr-bot), thanks [@subzero79](https://github.com/subzero79)
+<!-- 
+**Prebuilt** Docker image for this bot can be found [here](https://hub.docker.com/r/subzero79/docker-telegram-sonarr-bot) -->
 
 ## License
 (The MIT License)
 
-Copyright (c) 2015 Devin Buhl <devin.kray@gmail.com>
+Copyright (c) 2020 Nathan Owen <nathan.owen@live.com>
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
