@@ -9,13 +9,17 @@
     "maxResults": 15,
     "lang": "en"
   },
-  "sonarr": {
+  "radarr": {
     "hostname": "",
     "apiKey": "",
-    "port": 8989,
+    "port": 7878,
     "urlBase": "",
     "ssl": false,
     "username": "",
     "password": ""
+  },
+  "defaults" : {
+    "rootFolder": "",
+    "profileId": 1
   }
 }

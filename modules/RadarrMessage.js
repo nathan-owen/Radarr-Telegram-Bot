@@ -428,7 +428,7 @@ RadarrMessage.prototype.sendAcceptDefault = function(displayName) {
       var response = ['*Accept Defaults*\n'];
 
       response.push("What would you like to do?");
-      response.push("Accept Defaults (Recommended)\n 1080p HD\n Stored In: /media/");
+      response.push("Accept Defaults (Recommended)\n 4K (if available)\n Stored In: /media/");
       response.push("Custom");
 
 
