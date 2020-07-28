@@ -6,7 +6,7 @@
     "bluebird": "v3.0.6",
     "fs-extra": "^0.26.4",
     "i18n": "^0.5.0",
-    "lodash": "^4.0.0",
+    "lodash": "^4.17.19",
     "moment": "^2.11.0",
     "node-cache": "^3.0.0",
     "node-telegram-bot-api": "^0.19.2",
