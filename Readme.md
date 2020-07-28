@@ -98,15 +98,15 @@ Please select from the menu below.
 
 Use the custom keyboard to select the Movie.
 
-![Step One](https://raw.githubusercontent.com/nathan-owen/Radarr-Telegram-Bot/master/examples/step_1.jpg)
+![Step One](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_1.jpg)
 
 The bot will provide more info about the movie and ask you to confirm.
 
-![Step Two](https://raw.githubusercontent.com/nathan-owen/Radarr-Telegram-Bot/master/examples/step_2.jpg)
+![Step Two](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_2.jpg)
 
 The bot will ask you if you'd like to accept defaults or if you'd like to specify the settings.
 
-![Step Three](https://raw.githubusercontent.com/nathan-owen/Radarr-Telegram-Bot/master/examples/step_3.jpg)
+![Step Three](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_3.jpg)
 
 If you accepted defaults, it'll add the movie and you're done.
 
@@ -128,7 +128,7 @@ Please select from the menu below.
 
 Send the profile using the custom keyboard
 
-![Step Four](https://raw.githubusercontent.com/nathan-owen/Radarr-Telegram-Bot/master/examples/step_4.jpg)
+![Step Four](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_4.jpg)
 
 The bot will ask you where the path you want the movie to go
 
@@ -141,7 +141,7 @@ Please select from the menu below.
 
 Send the folder using the custom keyboard
 
-![Step Five](https://raw.githubusercontent.com/nathan-owen/Radarr-Telegram-Bot/master/examples/step_5.jpg)
+![Step Five](https://raw.githubusercontent.com/nathan-owen/telegram-radarr-bot/master/examples/step_5.jpg)
 
 
 If everything goes well, you'll see a text from the bot saying the movie was added.
@@ -179,23 +179,25 @@ Sonarr can be setup to send notifications to a user or a group chat when new con
 ## Docker
 Alternatively you may use Docker to start the bot
 ```
-docker run --name telegram-sonarr-bot \
+docker run --name radarr-telegram-bot \
   -e TELEGRAM_BOTTOKEN=
   -e BOT_PASSWORD=
   -e BOT_OWNER=
   -e BOT_NOTIFYID=
   -e BOT_MAXRESULTS=
-  -e SONARR_HOST=
-  -e SONARR_APIKEY=
-  -e SONARR_PORT=
-  -e SONARR_URLBASE=
-  -e SONARR_SSL=
-  -e SONARR_USERNAME=
-  -e SONARR_PASSWORD=
-  telegram-sonarr-bot
+  -e RADARR_HOST=
+  -e RADARR_APIKEY=
+  -e RADARR_PORT=
+  -e RADARR_URLBASE=
+  -e RADARR_SSL=
+  -e RADARR_USERNAME=
+  -e RADARR_PASSWORD=
+  -e DEFAULTS_ROOT_FOLDER=
+  -e DEFAULTS_PROFILE_ID=
+  -e DEFAULTS_MONITOR=
+  radarr-telegram-bot
 ```
-<!-- 
-**Prebuilt** Docker image for this bot can be found [here](https://hub.docker.com/r/subzero79/docker-telegram-sonarr-bot) -->
+**Prebuilt** Docker image for this bot can be found [here](https://hub.docker.com/r/nathanowen95/radarr-telegram-bot) 
 
 ## License
 (The MIT License)
