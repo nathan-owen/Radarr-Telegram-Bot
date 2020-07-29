@@ -559,7 +559,14 @@ function handleUnRevokeUserConfirm(userId, revokedConfirm) {
  * save access control list
  */
 function updateACL() {
-  fs.writeFile(__dirname + '/acl.json', JSON.stringify(acl), function(err) {
+  var aclListFile;
+ if (process.env.TELEGRAM_BOTTOKEN) {
+    aclListFile = '/config/acl.json';
+ } else {
+   aclListFile = __dirname + '/../acl.json';
+ }
+
+  fs.writeFile(aclListFile, JSON.stringify(acl), function(err) {
     if (err) {
       throw new Error(err);
     }

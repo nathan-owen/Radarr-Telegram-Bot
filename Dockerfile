@@ -9,4 +9,6 @@ RUN npm install
 
 COPY . ./
 
+VOLUME [ "/config" ]
+
 CMD ["npm", "start"]
