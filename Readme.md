@@ -196,6 +196,8 @@ docker run --name radarr-telegram-bot \
 <!-- 
 **Prebuilt** Docker image for this bot can be found [here](https://hub.docker.com/repository/docker/nathanowen95/radarr-telegram-bot) -->
 
+## Issues
+If you have any issues, questions or need assistance please add them to the Issues section here and I'll do my best to respond/fix them
 ## License
 (The MIT License)
 
