@@ -83,7 +83,7 @@
 	"botChatHelp_2": "\n*General commands:*",
 	"botChatHelp_3": "/start to start this bot",
 	"botChatHelp_4": "/help to for this list of commands",
-	"botChatHelp_5": "/query [movie] add new Movie *NOT IMPLEMENTED YET*",
+	"botChatHelp_5": "/query [movie] add new Movie",
 	"botChatHelp_6": "/library [movie] search Radarr library",
 	"botChatHelp_7": "/upcoming movies",
 	"botChatHelp_8": "/clear clear all previous commands",

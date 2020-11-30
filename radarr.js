@@ -142,13 +142,12 @@ bot.on('message', function(msg) {
        return replyWithError(user.id, new Error(i18n.__('notAuthorized')));     
     }
   }
-  if (message == "Accept Defaults")
-{
+   if (message == "Accept Defaults")
+  {
       verifyUser(user.id);
-
-    logger.info(i18n.__('botChatQueryFolderChoose',user.id,message));
-    return radarr.sendAddMovie("default");
-}
+      logger.info(i18n.__('botChatQueryFolderChoose',user.id,message));
+      return radarr.sendAddMovie("default");
+  }
 
   // get the current cache state
   var currentState = cache.get('state' + user.id);

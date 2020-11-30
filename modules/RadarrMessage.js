@@ -300,7 +300,7 @@ RadarrMessage.prototype.confirmMovieSelect = function(displayName) {
     });
   });
 
-  // check for existing movie on radarr
+  // prompt user to confirm the movie is what they want
   workflow.on('confirmMovie', function () {
     self.radarr.get('movie').then(function(result) {
       logger.info(i18n.__('logRadarrConfirmCorrectMovie', movie.keyboardValue, self.username));
@@ -320,7 +320,12 @@ RadarrMessage.prototype.confirmMovieSelect = function(displayName) {
       }
 
       // set cache
-      self.cache.set('state' + self.user.id, state.radarr.DEFAULT);
+      if(config.defaults.rootFolder)
+      {
+        self.cache.set('state' + self.user.id, state.radarr.DEFAULT);
+      } else {
+        self.cache.set('state' + self.user.id, state.radarr.PROFILE);
+      }
       self.cache.set('movieId' + self.user.id, movie.id);
 
       return self._sendMessage(response.join('\n'), keyboardList,false);
@@ -408,6 +413,7 @@ RadarrMessage.prototype.sendProfileList = function(displayName) {
   workflow.emit('getRadarrProfiles');
 };
 
+
 RadarrMessage.prototype.sendAcceptDefault = function(displayName) {
   var self = this;
 
@@ -417,27 +423,40 @@ RadarrMessage.prototype.sendAcceptDefault = function(displayName) {
     return self._sendMessage(new Error(i18n.__('errorRadarrWentWrong')));
   }
 
+  //If the user selected "NO" when being prompted if the movie displayed was what they wanted, this will cancel the workflow
   if(displayName == 'No'){
     return self._sendMessage(new Error(i18n.__('globalAborted')));
   }
 
-  logger.info(i18n.__('logRadarrDefaultListRequest', self.username));
+  var workflow = new (require('events').EventEmitter)();
+    logger.info(i18n.__('logRadarrDefaultListRequest', self.username));
 
-      var keyboardList = [['Accept Defaults'], ["Custom"]];
+  //Need to get the profile name based on if we have a default provided.
+  // get the radarr profiles
+  workflow.on('getDefaultProfileName', function () {
+    self.radarr.get(`profile/${config.defaults.profileId}`).then(function(result) {
+      
+      if(!result.message) {
+        var keyboardList = [['Accept Defaults'], ["Custom"]];
+        var response = ['*Accept Defaults*\n'];
+        response.push("What would you like to do?");
+        response.push(`Accept Defaults (Recommended)\n Profile: ${result.name}\n Stored In: ${config.defaults.rootFolder}`);
+        response.push("or")
+        response.push("Custom");
+        response.push(i18n.__('selectFromMenu'));
+        self.cache.set('state' + self.user.id, state.radarr.PROFILE);
+        return self._sendMessage(response.join('\n'), keyboardList);      
+      }
+    })
+    .catch(function(error) {
+      if(error.message == "NotFound") {
+       error.message =`Unable to find a matching Quality Profile with ID: ${config.defaults.profileId} as declared as the default profile. Please review your defaults and try again.`;
+      }
+      return self._sendMessage(error);
+    });
+  });
 
-      var response = ['*Accept Defaults*\n'];
-
-      response.push("What would you like to do?");
-      response.push("Accept Defaults (Recommended)\n 4K (if available)\n Stored In: /media/");
-      response.push("Custom");
-
-
-
-  response.push(i18n.__('selectFromMenu'));
-
-  self.cache.set('state' + self.user.id, state.radarr.PROFILE);
-
-  return self._sendMessage(response.join('\n'), keyboardList);
+  workflow.emit('getDefaultProfileName');
 };
 
 RadarrMessage.prototype.sendFolderList = function(profileName) {

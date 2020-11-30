@@ -6,11 +6,15 @@ Bot which lets you or others add series to [Radarr](https://radarr.video/) via t
 
 Contact [@BotFather](http://telegram.me/BotFather) on Telegram to create and get a bot token.
 
+## [Donate](https://www.paypal.com/donate?hosted_button_id=CCJFF8PUWPTNU)
+If you find this bot helpful in any way and feel like it, donations are greatly appreciated!
+[Donate Here](https://www.paypal.com/donate?hosted_button_id=CCJFF8PUWPTNU)
+
 Getting Started
 ---------------
 
 ## Prerequisites
-- [Node.js](http://nodejs.org) v4.2.x
+- [Node.js](http://nodejs.org)
 - [Git](https://git-scm.com/downloads) (optional)
 
 ## Installation
@@ -43,10 +47,10 @@ Telegram:
 
 Bot:
 - **password** the password to access the bot
-- **owner** your Telegram user ID. (you can fill this in later)
+- **owner** your Telegram user ID. (See below how to get your telegram ID)
 - **notifyId** Telegram ID used for notifications. (optional; you can fill this in later)
 
-Sonarr:
+Radarr:
 - **hostname**: hostname where Radarr runs (required)
 - **apiKey**: Your API to access Radarr (required)
 - **port**: port number Radarr is listening on (optional, default: 5050)
@@ -55,14 +59,21 @@ Sonarr:
 - **username**: HTTP Auth username (default: empty)
 - **password**: HTTP Auth password (default: empty)
 
+Defaults:
+- **rootFolder**: The default path used for storing movies. This is the "Root Folder" listed when you add a movie using the web interface
+- **profileID**: the number representing the quality profile you want to use for the movie. The simplest way to get the number is to go through the workflow to add a movie using the bot and count the profiles listed. For example the "Any" profile is always 1
+- **monitor**: true or false. This is if you want to have radarr monitor the movie (you almost always want this true)
+
 **Important note**: Restart the bot after making any changes to the `config.json` file.
 
 ```bash
 # Start the bot
 node radarr.js
 ```
+## How to get Telegram User ID
+In Telegram, go to chat with [@my_id_bot](https://t.me/my_id_bot) and it will give you the telegram id.
 
-## Usage (commands) Currently In Development. Below is hold over from Sonarr
+## Usage (commands)
 
 ### First use
 Send the bot the `/auth` command with the password you created in `config.json`
@@ -146,21 +157,6 @@ Send the folder using the custom keyboard
 
 If everything goes well, you'll see a text from the bot saying the movie was added.
 
-### Notifications
-Sonarr can be setup to send notifications to a user or a group chat when new content is added.  
-
-* In Sonarr go to `Settings` > `Connect` > `+` > `Custom Script`
-* In the Name field enter `Telegram`
-* In the Path field enter the full path to your node.js installation i.e. `C:\Program Files\nodejs\node.exe`
-* In the Arguments field enter the full path to `sonarr_notify.js` i.e `C:\bots\telegram-sonarr-bot\sonarr_notify.js`
-* Start the bot by running `node sonarr.js`
-* Open a new chat or group chat with the bot and type `/cid` 
-* Note the Chat ID
-* Open `config.json` and enter the Chat ID next to `notifyId`
-* Restart the bot
-* The specified chat will now begin receiving notifications for newly added content
-
-
 ### Additional commands
 * `/upcoming` shows upcoming episodes, has a day parameter, defaults to 3 days
 * `/library` search Sonarr library for existing shows
@@ -198,7 +194,7 @@ docker run --name radarr-telegram-bot \
   radarr-telegram-bot
 ```
 <!-- 
-**Prebuilt** Docker image for this bot can be found [here](https://hub.docker.com/r/subzero79/docker-telegram-sonarr-bot) -->
+**Prebuilt** Docker image for this bot can be found [here](https://hub.docker.com/repository/docker/nathanowen95/radarr-telegram-bot) -->
 
 ## License
 (The MIT License)
